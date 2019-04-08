@@ -18,9 +18,10 @@ import {
   Page,
   Upload,
   Form,
-  FormItem
+  FormItem,
 } from 'iview'
 import 'iview/dist/styles/iview.css';
+
 
 Vue.component('Button', Button);
 Vue.component('Form', Form);

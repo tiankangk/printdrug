@@ -9,7 +9,7 @@
             <Select :style="{width:item.width}" class="search-input" :clearable="true" v-else-if="item.type==='select'" v-model="item.val" style="width:200px">
                 <Option class="search-input" v-for="itemSelect in item.select" :value="itemSelect.value" :key="itemSelect.value">{{ itemSelect.label }}</Option>
             </Select>
-            <DatePicker :style="{width:item.width}" v-model="item.val" v-else type="daterange" placement="bottom-end" placeholder="请选择查询日期" style="width: 200px"></DatePicker>
+            <DatePicker :style="{width:item.width}"  v-model="item.val" v-else type="daterange" placement="bottom-end" placeholder="请选择查询日期" style="width: 200px"></DatePicker>
         </div>
         <div class="add-info-nav-sub">
             <Button type="success" @click="clickQuery">查询</Button>

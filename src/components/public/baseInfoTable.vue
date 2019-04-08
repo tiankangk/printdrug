@@ -6,7 +6,9 @@
                 <Button type="primary" @click="handleSelectAll(true)">全选</Button>
                 <Button type="warning" @click="handleSelectAll(false)">取消全选</Button>
             </div>
-            <Page :total="baseInfo.total" :current="currentPage" @on-change="pageChange"/>
+            <div class="page-container">
+            <Page show-total :total="baseInfo.total" :current="baseInfo.pageIndex" show-elevator @on-change="pageChange"/>
+            </div>
         </div>
     </div>
 </template>
@@ -15,7 +17,7 @@
     import { mapMutations } from 'vuex'
     export default {
         name: "baseInfoTable",
-        props: ["baseInfo","currentPage","isSelect"],
+        props: ["baseInfo","isSelect"],
         data() {
             return {
                 columns: []

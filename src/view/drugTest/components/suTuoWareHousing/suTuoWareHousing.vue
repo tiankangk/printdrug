@@ -4,9 +4,9 @@
             <Card>
                 <div class="header-container">
                     <public-search :searchVal="searchVal" @handleSearch="handleSearch"></public-search>
-                    <Button @click="printChoose" type="primary">打印选中项</Button>
                 </div>
                 <base-info-table
+                    :isSelect="isSelect"
                     class="table-list"
                     :base-info="baseInfo"
                     @handlePage="handlePage"
@@ -20,31 +20,47 @@
                 <Button type="primary" size="large" @click="handleLook">确定</Button>
             </div>
         </Modal>
+        <!-- 上传图片的模态框 -->
+        <Modal v-model="uploadPicModal" width="700" title="上传打印图片">
+            <upload-pic
+                :initPic="initPic"
+                :uploadPicData="uploadPicData"
+                :uploadFileList="uploadFileList"
+                @handleRemoveImg="handleRemoveImg"
+            ></upload-pic>
+            <div slot="footer">
+                <Button type="text" size="large" @click="modalCancel">取消</Button>
+                <Button type="primary" size="large" @click="handleUploadPic">确定</Button>
+            </div>
+        </Modal>
         <Spin fix v-if="loading" size="large"></Spin>
     </div>
 </template>
 <script>
     import publicSearch from "components/public/publicSearch.vue";
     import baseInfoTable from "components/public/baseInfoTable.vue";
-    import getLodop from "./LodopFuncs.js";
-    import { mapGetters } from "vuex";
-    import { getOutStockList, updatePrintStatus } from "api/urlPath";
+    import uploadPic from "../public/uploadPic.vue";
+    import { suTuoGetWareHousingList, suTuoInsertDrugPic } from "api/urlPath";
     export default {
         name: "drugTest",
         inject: ["reload"],
         components: {
             publicSearch,
-            baseInfoTable
+            baseInfoTable,
+            uploadPic
         },
         data() {
             return {
-                name: "欢迎使用药检打印系统",
                 loading: false,
+                isSelect: true,
                 previewPic: "",
                 currentPage: 1,
                 printPicModal: false,
                 uploadPicModal: false,
+                removeImg: [],
                 uploadPicData: {},
+                uploadFileList: [],
+                initPic: "",
                 searchVal: {
                     djbh: {
                         title: "单据编号",
@@ -58,14 +74,20 @@
                         type: "input",
                         width: "100px"
                     },
-                    zjm: {
-                        title: "助记码",
+                    dwmc: {
+                        title: "供应商名称",
+                        val: "",
+                        type: "input",
+                        width: "120px"
+                    },
+                    pihao: {
+                        title: "产品批号",
                         val: "",
                         type: "input",
                         width: "100px"
                     },
-                    pihao: {
-                        title: "产品批号",
+                    zjm: {
+                        title: "助记码",
                         val: "",
                         type: "input",
                         width: "100px"
@@ -86,24 +108,13 @@
                             }
                         ]
                     },
-                    isPrint: {
-                        title: "是否打印状态",
-                        val: "",
-                        type: "select",
-                        width: "80px",
-                        select: [
-                            {
-                                value: 1,
-                                label: "已打印"
-                            },
-                            {
-                                value: 0,
-                                label: "未打印"
-                            }
-                        ]
-                    },
                     time: {
-                        title: "日期",
+                        title: "开票日期",
+                        val: "",
+                        type: "selectTime"
+                    },
+                    updateTime: {
+                        title: "上传日期",
                         val: "",
                         type: "selectTime"
                     }
@@ -115,19 +126,16 @@
                     data: [],
                     columns: [
                         {
-                            type: "selection",
-                            width: 30,
-                            align: "center"
-                        },
-                        {
-                            title: "出库日期",
+                            title: "入库日期",
                             align: "center",
                             width: 80,
                             render: (h, params) => {
                                 return h(
                                     "div",
-                                    params.row.rq
-                                        ? params.row.rq.replace(/[T,Z]/g, " ")
+                                    params.row.RQ
+                                        ? this.$time(params.row.RQ).format(
+                                              "YYYY-MM-DD"
+                                          )
                                         : "---"
                                 );
                             }
@@ -136,64 +144,76 @@
                             title: "单据编号",
                             align: "center",
                             width: 120,
-                            key: "djbh"
+                            key: "ID"
                         },
+                        // {
+                        //     title: "供货单位内码",
+                        //     align: "center",
+                        //     width: 90,
+                        //     key: "dwbh"
+                        // },
                         {
-                            title: "销售单位编码",
+                            title: "供货单位编码",
                             align: "center",
                             width: 60,
-                            key: "danwbh"
+                            key: "DWBM"
                         },
                         {
-                            title: "销售单位名称",
+                            title: "供货单位名称",
                             align: "left",
                             width: 140,
-                            key: "dwmch"
+                            key: "DWMC"
                         },
+                        // {
+                        //     title: "商品内码",
+                        //     align: "center",
+                        //     width: 90,
+                        //     key: "spid"
+                        // },
                         {
                             title: "商品编码",
                             align: "center",
                             width: 70,
-                            key: "spbh"
+                            key: "YPBM"
                         },
                         {
                             title: "商品名称",
                             align: "left",
-                            key: "spmch"
+                            key: "YPMC"
                         },
                         {
                             title: "商品规格",
                             align: "left",
                             width: 90,
-                            key: "shpgg"
+                            key: "YPGG"
                         },
                         {
                             title: "计量单位",
                             align: "center",
                             width: 50,
-                            key: "dw"
+                            key: "JLDW"
                         },
                         {
                             title: "生产厂家",
                             align: "left",
-                            key: "shpchd"
+                            key: "SCCJ"
                         },
                         {
                             title: "批准文号",
                             align: "left",
-                            key: "pizhwh"
+                            key: "PZWH"
                         },
                         {
                             title: "产品批号",
                             align: "center",
                             width: 80,
-                            key: "pihao"
+                            key: "SCPH"
                         },
 
                         {
-                            title: "是否上传图片",
+                            title: "状态",
                             align: "center",
-                            width: 70,
+                            width: 60,
                             render: (h, params) => {
                                 return h(
                                     "div",
@@ -207,24 +227,8 @@
                             }
                         },
                         {
-                            title: "是否打印",
-                            align: "center",
-                            width: 70,
-                            render: (h, params) => {
-                                return h(
-                                    "div",
-                                    {
-                                        style: {
-                                            color: params.row.status ? "" : "red"
-                                        }
-                                    },
-                                    params.row.status ? "已打印" : "未打印"
-                                );
-                            }
-                        },
-                        {
                             title: "操作",
-                            width: 115,
+                            width: 210,
                             align: "center",
                             render: (h, params) => {
                                 return h("div", [
@@ -248,6 +252,28 @@
                                             }
                                         },
                                         "打印图片预览"
+                                    ),
+                                    h(
+                                        "Button",
+                                        {
+                                            props: {
+                                                type: "success"
+                                            },
+                                            on: {
+                                                click: () => {
+                                                    this.uploadPicModal = true;
+                                                    this.initPic =
+                                                        params.row.img || "";
+                                                    this.uploadPicData = {
+                                                        djbh: params.row.ID,
+                                                        pihao: params.row.SCPH,
+                                                        spid: params.row.YPBM,
+                                                        img: params.row.img
+                                                    };
+                                                }
+                                            }
+                                        },
+                                        "上传图片"
                                     )
                                 ]);
                             }
@@ -255,9 +281,6 @@
                     ]
                 }
             };
-        },
-        computed: {
-            ...mapGetters(["getSelectList"])
         },
         methods: {
             /**
@@ -267,39 +290,53 @@
                 this.baseInfo.pageIndex = index;
                 this.initData();
             },
-            /**
-             * 点击搜索执行的函数
+            /***
+             * 搜索药检内容
              */
             handleSearch(val) {
                 val.time.val.forEach((item, ind) => {
                     val.time.val[ind] = this.$time(item).format("YYYY-MM-DD");
                 });
+                val.updateTime.val.forEach((item, ind) => {
+                    val.updateTime.val[ind] = this.$time(item).format("YYYY-MM-DD");
+                    
+                });
+                console.log(this.searchVal);
+                sessionStorage.setItem("searchVal", JSON.stringify(this.searchVal));
                 this.baseInfo.pageIndex = 1;
                 this.initData();
             },
             /**
-             * 点击打印执行的函数
+             * 保存删除已保存在数据库的路径
              */
-            printChoose() {
-                if (this.getSelectList.length <= 0) {
-                    return this.$Message.warning("你还没有选中要添加的数据");
-                } else {
-                    this.$Modal.confirm({
-                        title: "提示",
-                        content: "确定打印选中项吗？",
-                        onOk: () => {
-                            this.createLODOP(this.getSelectList);
-                            updatePrintStatus(this.getSelectList).then(res => {
-                                if (res.success) {
-                                    this.$Message.success("打印成功");
-                                    this.reload();
-                                } else {
-                                    this.$Message.error("打印失败");
-                                }
-                            });
-                        }
-                    });
+            handleRemoveImg(img) {
+                this.removeImg.push(img);
+                console.log("removeImg", this.removeImg);
+            },
+            /**
+             * 上传图片到后台
+             */
+            handleUploadPic() {
+                // console.log(this.uploadPicData);
+                this.uploadPicData.time = this.$time(Date.now()).format(
+                    "YYYY-MM-DD HH:mm:ss"
+                );
+                let param = new FormData(); //创建form对象
+                param.append("uploadPicData", JSON.stringify(this.uploadPicData));
+                if (this.removeImg.length !== 0) {
+                    param.append("removeImg", JSON.stringify(this.removeImg));
                 }
+                this.uploadFileList.forEach((item, index) => {
+                    param.append("index", item);
+                });
+                suTuoInsertDrugPic(param).then(res => {
+                    if (res.success) {
+                        this.$Message.success("上传成功！");
+                        this.reload();
+                    } else {
+                        this.$Message.error("上传失败，请重新上传！");
+                    }
+                });
             },
             /**
              * 关闭上传图片的模态框
@@ -308,50 +345,34 @@
                 this.uploadPicModal = false;
             },
             /**
-             * 关闭图片预览的模态框
+             * 关闭打印图片的模态框
              */
             handleLook() {
                 this.printPicModal = false;
             },
             /**
-             * 初始化打印控件
-             */
-            createLODOP(urls) {
-                this.LODOP = getLodop();
-                let LODOP = this.LODOP;
-                LODOP.PRINT_INIT();
-                LODOP.SET_PRINT_MODE("PROGRAM_CONTENT_BYVAR", true); //生成程序时，内容参数有变量用变量，无变量用具体值
-                LODOP.SET_PRINT_STYLEA(0, "ContentVName", "MyData"); //设置内容参数的变量名
-                LODOP.SET_PRINT_PAGESIZE(1, 0, 0, "A4");
-                urls.forEach(item => {
-                    let imgList = item.img.split(",");
-                    imgList.forEach(img => {
-                        LODOP.ADD_PRINT_IMAGE(0, 0, '210mm','297mm', `<img border="0" style="width:210mm;height:297mm;" src="${img}">`);
-                        LODOP.PRINT();
-                    });
-                });
-                // LODOP.PRINT_DESIGN();
-            },
-            /**
-             * 初始化请求的数据
+             * 初始化数据发送的请求
              */
             initData() {
                 this.loading = true;
-                getOutStockList({
+                if (sessionStorage.getItem("searchVal")) {
+                    this.searchVal = JSON.parse(
+                        sessionStorage.getItem("searchVal")
+                    );
+                }
+                suTuoGetWareHousingList({
                     pageIndex: this.baseInfo.pageIndex,
                     pageSize: this.baseInfo.pageSize,
                     searchVal: this.searchVal
                 }).then(res => {
+                    console.log(res);
                     this.loading = false;
-                    res.result.forEach(item => {
-                        item._disabled = Boolean(!item.img);
-                    });
                     this.baseInfo.data = res.result;
                     this.baseInfo.total = res.total;
                 });
             }
         },
-        mounted() {
+        created() {
             this.initData();
         }
     };
@@ -375,5 +396,8 @@
     width: 600px;
     display: block;
     margin: 10px auto;
+}
+.pic-container {
+    width: 600px;
 }
 </style>

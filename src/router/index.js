@@ -27,6 +27,12 @@ export default new Router({
             name: 'outStock',
             component: () => import('view/drugTest/components/outStock/outStock')
         }
+        ,
+        {
+            path: 'sutuo-ware-housing',
+            name: 'suTuoWareHousing',
+            component: () => import('view/drugTest/components/suTuoWareHousing/suTuoWareHousing')
+        }
         ]
     }
 

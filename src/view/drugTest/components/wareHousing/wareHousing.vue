@@ -10,20 +10,24 @@
                     class="table-list"
                     :base-info="baseInfo"
                     @handlePage="handlePage"
-                    :currentPage="currentPage"
                 ></base-info-table>
             </Card>
         </div>
         <!-- 展示打印图片的模态框 -->
         <Modal v-model="printPicModal" :width="700" title="打印图片预览">
-            <img class="preview-pic" :src="previewPic" alt>
+            <img v-for="(url, ind) in previewPic" :key="ind" class="preview-pic" :src="url" alt>
             <div slot="footer">
                 <Button type="primary" size="large" @click="handleLook">确定</Button>
             </div>
         </Modal>
         <!-- 上传图片的模态框 -->
         <Modal v-model="uploadPicModal" width="700" title="上传打印图片">
-            <upload-pic :uploadPicData="uploadPicData"></upload-pic>
+            <upload-pic
+                :initPic="initPic"
+                :uploadPicData="uploadPicData"
+                :uploadFileList="uploadFileList"
+                @handleRemoveImg="handleRemoveImg"
+            ></upload-pic>
             <div slot="footer">
                 <Button type="text" size="large" @click="modalCancel">取消</Button>
                 <Button type="primary" size="large" @click="handleUploadPic">确定</Button>
@@ -35,7 +39,7 @@
 <script>
     import publicSearch from "components/public/publicSearch.vue";
     import baseInfoTable from "components/public/baseInfoTable.vue";
-    import uploadPic from "./uploadPic.vue";
+    import uploadPic from "../public/uploadPic.vue";
     import { getWareHousingList, insertDrugPic } from "api/urlPath";
     export default {
         name: "drugTest",
@@ -53,47 +57,60 @@
                 currentPage: 1,
                 printPicModal: false,
                 uploadPicModal: false,
+                removeImg: [],
                 uploadPicData: {},
+                uploadFileList: [],
+                initPic: "",
                 searchVal: {
                     djbh: {
                         title: "单据编号",
                         val: "",
                         type: "input",
-                        width:'100px'
+                        width: "100px"
                     },
                     spbh: {
                         title: "商品编码",
                         val: "",
                         type: "input",
-                        width:'100px'
+                        width: "100px"
                     },
                     pihao: {
                         title: "产品批号",
                         val: "",
                         type: "input",
-                        width:'100px'
+                        width: "100px"
+                    },
+                    zjm: {
+                        title: "助记码",
+                        val: "",
+                        type: "input",
+                        width: "100px"
                     },
                     status: {
                         title: "状态",
                         val: "",
                         type: "select",
-                        width:'80px',
-                        select:[
+                        width: "80px",
+                        select: [
                             {
-                                value:1,
-                                label:'已上传'
+                                value: 1,
+                                label: "已上传"
                             },
                             {
-                                value:0,
-                                label:'未上传'
+                                value: 0,
+                                label: "未上传"
                             }
                         ]
                     },
                     time: {
-                        title: "日期",
+                        title: "开票日期",
                         val: "",
                         type: "selectTime"
-                       
+                    },
+                    updateTime: {
+                        title: "上传日期",
+                        val: "",
+                        type: "selectTime"
                     }
                 },
                 baseInfo: {
@@ -220,8 +237,9 @@
                                             on: {
                                                 click: () => {
                                                     this.printPicModal = true;
-                                                    this.previewPic =
-                                                        params.row.img;
+                                                    this.previewPic = params.row.img.split(
+                                                        ","
+                                                    );
                                                 }
                                             }
                                         },
@@ -236,13 +254,13 @@
                                             on: {
                                                 click: () => {
                                                     this.uploadPicModal = true;
-                                                    // this.previewPic =
-                                                    //     params.row.img;
+                                                    this.initPic =
+                                                        params.row.img || "";
                                                     this.uploadPicData = {
                                                         djbh: params.row.djbh,
                                                         pihao: params.row.pihao,
                                                         spid: params.row.spid,
-                                                        img:params.row.img || ''
+                                                        img: params.row.img
                                                     };
                                                 }
                                             }
@@ -264,18 +282,45 @@
                 this.baseInfo.pageIndex = index;
                 this.initData();
             },
+            /***
+             * 搜索药检内容
+             */
             handleSearch(val) {
                 val.time.val.forEach((item, ind) => {
                     val.time.val[ind] = this.$time(item).format("YYYY-MM-DD");
+                    
+                });
+                val.updateTime.val.forEach((item, ind) => {
+                    val.updateTime.val[ind] = this.$time(item).format("YYYY-MM-DD");
+                    
                 });
                 this.baseInfo.pageIndex = 1;
                 this.initData();
             },
+            /**
+             * 保存删除已保存在数据库的路径
+             */
+            handleRemoveImg(img) {
+                this.removeImg.push(img);
+                console.log("removeImg", this.removeImg);
+            },
+            /**
+             * 上传图片到后台
+             */
             handleUploadPic() {
                 this.uploadPicData.time = this.$time(Date.now()).format(
                     "YYYY-MM-DD HH:mm:ss"
                 );
-                insertDrugPic(this.uploadPicData).then(res => {
+                let param = new FormData(); //创建form对象
+                param.append("uploadPicData", JSON.stringify(this.uploadPicData));
+                if (this.removeImg.length !== 0) {
+                    param.append("removeImg", JSON.stringify(this.removeImg));
+                }
+                this.uploadFileList.forEach((item, index) => {
+                    console.log(item);
+                    param.append("index", item);
+                });
+                insertDrugPic(param).then(res => {
                     if (res.success) {
                         this.$Message.success("上传成功！");
                         this.reload();
@@ -284,12 +329,21 @@
                     }
                 });
             },
+            /**
+             * 关闭上传图片的模态框
+             */
             modalCancel() {
                 this.uploadPicModal = false;
             },
+            /**
+             * 关闭打印图片的模态框
+             */
             handleLook() {
                 this.printPicModal = false;
             },
+            /**
+             * 初始化数据发送的请求
+             */
             initData() {
                 this.loading = true;
                 getWareHousingList({
@@ -297,13 +351,14 @@
                     pageSize: this.baseInfo.pageSize,
                     searchVal: this.searchVal
                 }).then(res => {
+                    console.log(res);
                     this.loading = false;
                     this.baseInfo.data = res.result;
                     this.baseInfo.total = res.total;
                 });
             }
         },
-        mounted() {
+        created() {
             this.initData();
         }
     };
@@ -323,8 +378,12 @@
     }
 }
 .preview-pic {
-    max-width:600px;
+    border: 3px dotted black;
+    width: 600px;
     display: block;
-    margin: auto;
+    margin: 10px auto;
+}
+.pic-container {
+    width: 600px;
 }
 </style>

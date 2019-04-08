@@ -24,7 +24,7 @@
             return {
                 menuList: [
                     {
-                        title: "药检管理",
+                        title: "时空药检管理",
                         icon: "ios-paper",
                         children: [
                             {
@@ -34,6 +34,16 @@
                             {
                                 name: "出库药检管理",
                                 url: "out-stock"
+                            }
+                        ]
+                    },
+                    {
+                        title: "速拓药检管理",
+                        icon: "ios-paper",
+                        children: [
+                            {
+                                name: "入库药检管理",
+                                url: "sutuo-ware-housing"
                             }
                         ]
                     }
