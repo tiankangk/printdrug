@@ -6,11 +6,7 @@
                     <public-search :searchVal="searchVal" @handleSearch="handleSearch"></public-search>
                     <Button @click="printChoose" type="primary">打印选中项</Button>
                 </div>
-                <base-info-table
-                    class="table-list"
-                    :base-info="baseInfo"
-                    @handlePage="handlePage"
-                ></base-info-table>
+                <base-info-table class="table-list" :base-info="baseInfo" @handlePage="handlePage"></base-info-table>
             </Card>
         </div>
         <!-- 展示打印图片的模态框 -->
@@ -288,11 +284,13 @@
                         title: "提示",
                         content: "确定打印选中项吗？",
                         onOk: () => {
+                            console.log("getSelectList", this.getSelectList);
                             this.createLODOP(this.getSelectList);
                             updatePrintStatus(this.getSelectList).then(res => {
                                 if (res.success) {
                                     this.$Message.success("打印成功");
-                                    this.reload();
+                                    this.initData();
+                                    // this.reload();
                                 } else {
                                     this.$Message.error("打印失败");
                                 }
@@ -317,6 +315,7 @@
              * 初始化打印控件
              */
             createLODOP(urls) {
+                console.log("urls", urls);
                 this.LODOP = getLodop();
                 let LODOP = this.LODOP;
                 LODOP.PRINT_INIT();
@@ -326,11 +325,21 @@
                 urls.forEach(item => {
                     let imgList = item.img.split(",");
                     imgList.forEach(img => {
-                        LODOP.ADD_PRINT_IMAGE(0, 0, '210mm','297mm', `<img border="0" style="width:210mm;height:297mm;" src="${img}">`);
-                        LODOP.PRINT();
+                        console.log("img", img);
+
+                        LODOP.ADD_PRINT_IMAGE(
+                            0,
+                            0,
+                            "210mm",
+                            "297mm",
+                            `<img border="0" style="width:210mm;height:297mm;" src="${img}">`
+                        );
+                        LODOP.SET_PRINT_STYLEA(0, "HtmWaitMilSecs", 1000);
+                        LODOP.PRINT_DESIGN();
+                        // LODOP.PRINT();
+                        LODOP.NEWPAGEA();
                     });
                 });
-                // LODOP.PRINT_DESIGN();
             },
             /**
              * 初始化请求的数据
