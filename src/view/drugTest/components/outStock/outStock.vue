@@ -335,11 +335,12 @@
                             `<img border="0" style="width:210mm;height:297mm;" src="${img}">`
                         );
                         LODOP.SET_PRINT_STYLEA(0, "HtmWaitMilSecs", 1000);
-                        // LODOP.PRINT_DESIGN();
-                        LODOP.PRINT();
+
+                        // LODOP.PRINT();
                         LODOP.NEWPAGEA();
                     });
                 });
+                LODOP.PRINT_DESIGN();
             },
             /**
              * 初始化请求的数据
