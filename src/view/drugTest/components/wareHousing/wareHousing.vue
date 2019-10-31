@@ -68,8 +68,14 @@
                         type: "input",
                         width: "100px"
                     },
+                     dwmc: {
+                        title: "供应商名称/助记码",
+                        val: "",
+                        type: "input",
+                        width: "150px"
+                    },
                     spbh: {
-                        title: "商品编码",
+                        title: "商品编码/名称/助记码",
                         val: "",
                         type: "input",
                         width: "100px"
@@ -80,12 +86,12 @@
                         type: "input",
                         width: "100px"
                     },
-                    zjm: {
-                        title: "助记码",
-                        val: "",
-                        type: "input",
-                        width: "100px"
-                    },
+                    // zjm: {
+                    //     title: "助记码",
+                    //     val: "",
+                    //     type: "input",
+                    //     width: "100px"
+                    // },
                     status: {
                         title: "状态",
                         val: "",
@@ -302,7 +308,6 @@
              */
             handleRemoveImg(img) {
                 this.removeImg.push(img);
-                console.log("removeImg", this.removeImg);
             },
             /**
              * 上传图片到后台
@@ -317,7 +322,6 @@
                     param.append("removeImg", JSON.stringify(this.removeImg));
                 }
                 this.uploadFileList.forEach((item, index) => {
-                    console.log(item);
                     param.append("index", item);
                 });
                 insertDrugPic(param).then(res => {
@@ -351,7 +355,6 @@
                     pageSize: this.baseInfo.pageSize,
                     searchVal: this.searchVal
                 }).then(res => {
-                    console.log(res);
                     this.loading = false;
                     this.baseInfo.data = res.result;
                     this.baseInfo.total = res.total;

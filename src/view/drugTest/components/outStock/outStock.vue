@@ -4,8 +4,11 @@
             <Card>
                 <div class="header-container">
                     <public-search :searchVal="searchVal" @handleSearch="handleSearch"></public-search>
+                    <div>
                     <Button @click="printChoose" type="primary">打印选中项</Button>
+                    </div>
                 </div>
+            
                 <base-info-table class="table-list" :base-info="baseInfo" @handlePage="handlePage"></base-info-table>
             </Card>
         </div>
@@ -49,13 +52,7 @@
                         width: "100px"
                     },
                     spbh: {
-                        title: "商品编码",
-                        val: "",
-                        type: "input",
-                        width: "100px"
-                    },
-                    zjm: {
-                        title: "助记码",
+                        title: "商品编码/名称/助记码",
                         val: "",
                         type: "input",
                         width: "100px"
@@ -284,7 +281,6 @@
                         title: "提示",
                         content: "确定打印选中项吗？",
                         onOk: () => {
-                            console.log("getSelectList", this.getSelectList);
                             this.createLODOP(this.getSelectList);
                             updatePrintStatus(this.getSelectList).then(res => {
                                 if (res.success) {
@@ -315,7 +311,6 @@
              * 初始化打印控件
              */
             createLODOP(urls) {
-                console.log("urls", urls);
                 this.LODOP = getLodop();
                 let LODOP = this.LODOP;
                 LODOP.PRINT_INIT();
@@ -325,8 +320,6 @@
                 urls.forEach(item => {
                     let imgList = item.img.split(",");
                     imgList.forEach(img => {
-                        console.log("img", img);
-
                         LODOP.ADD_PRINT_IMAGE(
                             0,
                             0,
@@ -372,6 +365,7 @@
     background: #f1f0f5;
     .header-container {
         display: flex;
+        align-items:center;
         justify-content: space-between;
     }
     .content {

@@ -1,9 +1,15 @@
 import axios from 'axios'
 
-// const drugTestURL = 'http://localhost:3002/'
-const drugTestURL = 'http://192.168.0.199:3002/'
-// const suTuoDrugTestURL = 'http://localhost:3003/'
-const suTuoDrugTestURL = 'http://192.168.0.199:3003/'
+
+if (process.env.NODE_ENV === 'development') {
+    var drugTestURL = 'http://localhost:3002/'
+    var suTuoDrugTestURL = 'http://localhost:3003/'
+
+} else {
+    var drugTestURL = 'http://192.168.0.199:3002/'
+    var suTuoDrugTestURL = 'http://192.168.0.199:3003/'
+}
+
 
 
 /**
@@ -17,7 +23,7 @@ export const getWareHousingList = params => {
 }
 // 把上传的药检图片存到数据库
 export const insertDrugPic = params => {
-    return axios.post(drugTestURL + 'insertDrugPic', params,{headers:{'Content-Type':'multipart/form-data'}}).then(res => res.data)
+    return axios.post(drugTestURL + 'insertDrugPic', params, { headers: { 'Content-Type': 'multipart/form-data' } }).then(res => res.data)
 }
 // 获取出库药检打印系统列表接口
 export const getOutStockList = params => {
@@ -38,6 +44,6 @@ export const suTuoGetWareHousingList = params => {
 }
 // 把上传的药检图片存到数据库
 export const suTuoInsertDrugPic = params => {
-    return axios.post(suTuoDrugTestURL + 'suTuoInsertDrugPic', params,{headers:{'Content-Type':'multipart/form-data'}}).then(res => res.data)
+    return axios.post(suTuoDrugTestURL + 'suTuoInsertDrugPic', params, { headers: { 'Content-Type': 'multipart/form-data' } }).then(res => res.data)
 }
 
